@@ -1,5 +1,4 @@
 #include <windows.h>
-#include "resource.h"
 
 const char g_szClassName[] = "myWindowClass";
 
@@ -8,25 +7,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg)
     {
-        case WM_LBUTTONUP:
-// BEGIN NEW CODE
-        {
-            char szFileName[MAX_PATH];
-            HINSTANCE hInstance = GetModuleHandle(NULL);
-
-            GetModuleFileName(hInstance, szFileName, MAX_PATH);
-            MessageBox(hwnd, szFileName, "This program is:", MB_OK | MB_ICONINFORMATION);
-        }
-        break;
         case WM_CLOSE:
-        {
-            int ret = MessageBox(hwnd, "Are you sure you want to quit?", "Note", MB_YESNO);
-            if(ret == IDYES)
-            {
-                DestroyWindow(hwnd);
-            }
-        }
-// END NEW CODE
+            DestroyWindow(hwnd);
         break;
         case WM_DESTROY:
             PostQuitMessage(0);
@@ -51,12 +33,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.hInstance     = hInstance;
-    wc.hIcon         = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_NOTEPADICON));
-    wc.hIconSm       = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_NOTEPADICON), IMAGE_ICON, 16, 16, 0);
+    wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
     wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-    wc.lpszMenuName  = MAKEINTRESOURCE(IDR_NOTEPADMENU);
+    wc.lpszMenuName  = NULL;
     wc.lpszClassName = g_szClassName;
+    wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
 
     if(!RegisterClassEx(&wc))
     {
@@ -85,7 +67,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     UpdateWindow(hwnd);
 
     // Step 3: The Message Loop
-    while(GetMessage(&Msg, NULL, 0, 0) > 0) // Returns -1 if it encounters an error
+    while(GetMessage(&Msg, NULL, 0, 0) > 0)
     {
         TranslateMessage(&Msg);
         DispatchMessage(&Msg);
