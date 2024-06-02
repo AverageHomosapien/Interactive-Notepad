@@ -1,6 +1,6 @@
 #include "resource.h"
 
-IDR_NOTEPADMENU
+IDR_NOTEPADMENU MENU
 BEGIN
     POPUP "&File"
     BEGIN

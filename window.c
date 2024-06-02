@@ -9,7 +9,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
         case WM_LBUTTONUP:
-// BEGIN NEW CODE
         {
             char szFileName[MAX_PATH];
             HINSTANCE hInstance = GetModuleHandle(NULL);
@@ -26,7 +25,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 DestroyWindow(hwnd);
             }
         }
-// END NEW CODE
         break;
         case WM_DESTROY:
             PostQuitMessage(0);
@@ -69,7 +67,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, //0
         g_szClassName,
-        "The title of my window",
+        "Cool Notepad!",
         WS_OVERLAPPEDWINDOW, // Maybe useful for a fullscreen application?
         CW_USEDEFAULT, CW_USEDEFAULT, 240, 120,
         NULL, NULL, hInstance, NULL); //Parent Window handle, Menu handle etc.
