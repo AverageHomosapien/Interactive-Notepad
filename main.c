@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "resource.h"
 
 const char g_szClassName[] = "myWindowClass";
 
@@ -7,6 +8,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg)
     {
+	case WM_LBUTTONDOWN:    // <-
+	    char szFileName[MAX_PATH];
+            HINSTANCE hInstance = GetModuleHandle(NULL);
+
+            GetModuleFileName(hInstance, szFileName, MAX_PATH);
+            MessageBox(hwnd, szFileName, "This program is:", MB_OK | MB_ICONINFORMATION);	
+	break;                  // <-
         case WM_CLOSE:
             DestroyWindow(hwnd);
         break;
@@ -33,12 +41,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.hInstance     = hInstance;
-    wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hIcon         = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_NOTEPADICON));
+    wc.hIconSm       = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_NOTEPADICON), IMAGE_ICON, 16, 16, 0);
     wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-    wc.lpszMenuName  = NULL;
+    wc.lpszMenuName  = MAKEINTRESOURCE(IDR_NOTEPADMENU);
     wc.lpszClassName = g_szClassName;
-    wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
 
     if(!RegisterClassEx(&wc))
     {
@@ -49,12 +57,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     // Step 2: Creating the Window
     hwnd = CreateWindowEx(
-        WS_EX_CLIENTEDGE, //0
+        WS_EX_CLIENTEDGE,
         g_szClassName,
-        "The title of my window",
-        WS_OVERLAPPEDWINDOW, // Maybe useful for a fullscreen application?
+        "Interactive Notepad",
+        WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, 240, 120,
-        NULL, NULL, hInstance, NULL); //Parent Window handle, Menu handle etc.
+        NULL, NULL, hInstance, NULL);
 
     if(hwnd == NULL)
     {

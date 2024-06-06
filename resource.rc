@@ -4,14 +4,14 @@ IDR_NOTEPADMENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "E&exit", ID_FILE_EXIT
+        MENUITEM "E&xit", ID_FILE_EXIT
     END
 
     POPUP "&Actions"
     BEGIN
         MENUITEM "&Save", ID_FILE_SAVE
-        MENUITEM "Undo", ID_FILE_UNDO
-        MENUITEM "Redo", ID_FILE_REDO
+        MENUITEM "&Undo", ID_FILE_UNDO
+        MENUITEM "&Redo", ID_FILE_REDO
     END
 END
 
