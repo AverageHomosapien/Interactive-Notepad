@@ -9,18 +9,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
 	case WM_LBUTTONDOWN:    // <-
+        {
 	    char szFileName[MAX_PATH];
             HINSTANCE hInstance = GetModuleHandle(NULL);
 
             GetModuleFileName(hInstance, szFileName, MAX_PATH);
-            MessageBox(hwnd, szFileName, "This program is:", MB_OK | MB_ICONINFORMATION);	
-	break;                  // <-
+            MessageBox(hwnd, szFileName, "This program is:", MB_OK | MB_ICONINFORMATION);   
+        }
+            break;                  // <-
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case ID_FILE_EXIT:
+                    DestroyWindow(hwnd);
+                    break;
+                case ID_FILE_SAVE:
+                    MessageBox(hwnd, "Saving...", "Interactive Notepad", MB_OK | MB_ICONINFORMATION);   
+                    break;
+            }
+            break;                  // <-
         case WM_CLOSE:
             DestroyWindow(hwnd);
-        break;
+            break;
         case WM_DESTROY:
             PostQuitMessage(0);
-        break;
+            break;
         default:
             return DefWindowProc(hwnd, msg, wParam, lParam);
     }
