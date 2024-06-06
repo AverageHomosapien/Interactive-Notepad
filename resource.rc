@@ -10,6 +10,8 @@ BEGIN
     POPUP "&Actions"
     BEGIN
         MENUITEM "&Save", ID_FILE_SAVE
+        MENUITEM "&S&ave As", ID_FILE_SAVE_AS
+        MENUITEM "&Open", ID_FILE_OPEN
         MENUITEM "&Undo", ID_FILE_UNDO
         MENUITEM "&Redo", ID_FILE_REDO
     END

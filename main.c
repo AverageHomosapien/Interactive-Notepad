@@ -8,23 +8,84 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg)
     {
-	case WM_LBUTTONDOWN:    // <-
+        case WM_CREATE:
+        {
+            HFONT hfDefault;
+            HWND hEdit;
+
+            hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", 
+            WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, 
+            0, 0, 100, 100, hwnd, (HMENU)IDC_EDIT_WINDOW, GetModuleHandle(NULL), NULL);
+            if(hEdit == NULL)
+            {
+                MessageBox(hwnd, "Could not create edit box.", "Error", MB_OK | MB_ICONERROR);
+            }
+            hfDefault = GetStockObject(DEFAULT_GUI_FONT);
+            SendMessage(hEdit, WM_SETFONT, (WPARAM)hfDefault, MAKELPARAM(FALSE, 0));
+        }
+        case WM_SIZE:
+        {
+            HWND hEdit;
+            RECT rcClient;
+
+            GetClientRect(hwnd, &rcClient);
+
+            hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
+            SetWindowPos(hEdit, NULL, 0, 0, rcClient.right, rcClient.bottom, SWP_NOZORDER);
+        }
+        break;
+        case WM_LBUTTONDOWN:
         {
 	    char szFileName[MAX_PATH];
             HINSTANCE hInstance = GetModuleHandle(NULL);
 
             GetModuleFileName(hInstance, szFileName, MAX_PATH);
-            MessageBox(hwnd, szFileName, "This program is:", MB_OK | MB_ICONINFORMATION);   
+            MessageBox(hwnd, szFileName, ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
         }
-            break;                  // <-
+            break;
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
                 case ID_FILE_EXIT:
                     DestroyWindow(hwnd);
                     break;
+
                 case ID_FILE_SAVE:
-                    MessageBox(hwnd, "Saving...", "Interactive Notepad", MB_OK | MB_ICONINFORMATION);   
+                    MessageBox(hwnd, "Save", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                    break;
+
+                case ID_FILE_SAVE_AS:
+                    MessageBox(hwnd, "Save As", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                    break;
+                    
+                case ID_FILE_OPEN:
+                     OPENFILENAME ofn;
+                    char szFileName[MAX_PATH] = "";
+
+                    ZeroMemory(&ofn, sizeof(ofn));
+
+                    ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
+                    ofn.hwndOwner = hwnd;
+                    ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+                    ofn.lpstrFile = szFileName;
+                    ofn.nMaxFile = MAX_PATH;
+                    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+                    ofn.lpstrDefExt = "txt";
+
+                    if(GetOpenFileName(&ofn))
+                    {
+                        // Do something usefull with the filename stored in szFileName 
+                    }
+                    MessageBox(hwnd, szFileName, ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                    MessageBox(hwnd, "Open", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                    break;
+
+                case ID_FILE_UNDO:
+                    MessageBox(hwnd, "Undo", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                    break;
+
+                case ID_FILE_REDO:
+                    MessageBox(hwnd, "Redo", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
                     break;
             }
             break;                  // <-

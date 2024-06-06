@@ -1,7 +1,12 @@
-#define IDR_NOTEPADMENU 101
-#define IDI_NOTEPADICON 102
+#define IDC_EDIT_WINDOW 101
+#define IDR_NOTEPADMENU 102
+#define IDI_NOTEPADICON 103
 
 #define ID_FILE_EXIT 9001
 #define ID_FILE_SAVE 9002
-#define ID_FILE_UNDO 9003
-#define ID_FILE_REDO 9004
+#define ID_FILE_SAVE_AS 9003
+#define ID_FILE_OPEN 9004
+#define ID_FILE_UNDO 9005
+#define ID_FILE_REDO 9006
+
+#define ID_APP_NAME "Interactive Notepad"
