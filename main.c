@@ -1,11 +1,17 @@
 #include <windows.h>
 #include "resource.h"
+#include "menu_operations.c"
 
 const char g_szClassName[] = "myWindowClass";
 
 // Step 4: the Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    //HWND hEdit; // Struggling with scope of these dialog boxes
+    OPENFILENAME ofn;
+    char szFileName[MAX_PATH] = "";
+    ZeroMemory(&ofn, sizeof(ofn));
+
     switch(msg)
     {
         case WM_CREATE:
@@ -55,15 +61,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case ID_FILE_SAVE_AS:
+                    ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
+                    ofn.hwndOwner = hwnd;
+                    ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+                    ofn.lpstrFile = szFileName;
+                    ofn.nMaxFile = MAX_PATH;
+                    ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT; 
+                    ofn.lpstrDefExt = "txt";
+
+                    if(GetSaveFileName(&ofn))
+                    {
+                        SaveTextFileFromEdit(GetDlgItem(hwnd, IDC_EDIT_WINDOW), ofn.lpstrFile);
+                    }
                     MessageBox(hwnd, "Save As", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
                     break;
                     
                 case ID_FILE_OPEN:
-                     OPENFILENAME ofn;
-                    char szFileName[MAX_PATH] = "";
-
-                    ZeroMemory(&ofn, sizeof(ofn));
-
                     ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
                     ofn.hwndOwner = hwnd;
                     ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
@@ -74,10 +87,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                     if(GetOpenFileName(&ofn))
                     {
-                        // Do something usefull with the filename stored in szFileName 
+                        LoadTextFileToEdit(GetDlgItem(hwnd, IDC_EDIT_WINDOW), ofn.lpstrFile);
                     }
-                    MessageBox(hwnd, szFileName, ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
-                    MessageBox(hwnd, "Open", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
                     break;
 
                 case ID_FILE_UNDO:
@@ -88,7 +99,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     MessageBox(hwnd, "Redo", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
                     break;
             }
-            break;                  // <-
+            break;
         case WM_CLOSE:
             DestroyWindow(hwnd);
             break;

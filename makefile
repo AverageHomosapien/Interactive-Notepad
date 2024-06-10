@@ -15,3 +15,5 @@ $(EXEC) : main.o resource.res
 
 resource.res : resource.rc resource.h
 	windres $< -O coff -o $@
+
+.PHONY: clean
