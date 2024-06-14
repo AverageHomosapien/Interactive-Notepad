@@ -1,6 +1,7 @@
 #define IDC_EDIT_WINDOW 101
-#define IDR_NOTEPADMENU 102
-#define IDI_NOTEPADICON 103
+#define IDC_STATUS_WINDOW 102
+#define IDR_NOTEPADMENU 103
+#define IDI_NOTEPADICON 104
 
 #define ID_FILE_EXIT 9001
 #define ID_FILE_SAVE 9002
@@ -10,3 +11,5 @@
 #define ID_FILE_REDO 9006
 
 #define ID_APP_NAME "Interactive Notepad"
+#define ID_APP_CLASS "MainWindowClass"
+#define ID_BOTTOMBAR_CLASS "BottomBarClass"
