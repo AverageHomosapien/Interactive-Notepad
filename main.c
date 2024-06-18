@@ -3,28 +3,27 @@
 #include "resource.h"
 #include "menu_operations.c"
 
+const char* statusBarCharactersSuffix = " Characters";
+const int maxPositiveIntChars = 11;
+char szFileName[MAX_PATH] = "";
+OPENFILENAME ofn;
+
 // The Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    OPENFILENAME ofn;
-    char szFileName[MAX_PATH] = "";
-    ZeroMemory(&ofn, sizeof(ofn));
-
     switch(msg)
     {
         case WM_CREATE:
         {
-            // Initialize common controls including the status bar
-            INITCOMMONCONTROLSEX icex;
-            icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-            icex.dwICC = ICC_BAR_CLASSES; // Initialize the status bar
-            InitCommonControlsEx(&icex);
+            // Initialize common controls (required for using the status bar)
+            InitCommonControls();
 
             HFONT hfDefault;
             HWND hEdit;
             HWND hStatus;
             hfDefault = GetStockObject(DEFAULT_GUI_FONT);
 
+            // Creating the text edit area on the notepad
             hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, 0, 0, 100, 100, hwnd, (HMENU)IDC_EDIT_WINDOW, GetModuleHandle(NULL), NULL);
             if(hEdit == NULL)
             {
@@ -32,17 +31,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             SendMessage(hEdit, WM_SETFONT, (WPARAM)hfDefault, MAKELPARAM(FALSE, 0));
 
+            // Creating the 'StatusBox' footer on the notepad
             hStatus = CreateWindowEx(0, STATUSCLASSNAME, NULL, WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP, 0, 0, 0, 0, hwnd, (HMENU)IDC_STATUS_WINDOW, GetModuleHandle(NULL), NULL);
             if(hStatus == NULL)
             {
                 MessageBox(hwnd, "Could not create status box.", "Error", MB_OK | MB_ICONERROR);
             }
             SendMessage(hStatus, WM_SETFONT, (WPARAM)hfDefault, MAKELPARAM(FALSE, 0));
-
+            // Adding messages to a dialog box
             int statwidths[] = {100, -1};
             SendMessage(hStatus, SB_SETPARTS, sizeof(statwidths)/sizeof(int), (LPARAM)statwidths);
             SendMessage(hStatus, SB_SETTEXT, 0, (LPARAM)"Line 1, Column 1");
             SendMessage(hStatus, SB_SETTEXT, 1, (LPARAM)"0 Characters");
+            
         }
         case WM_SIZE:
         {
@@ -69,13 +70,34 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
         case WM_LBUTTONDOWN:
         {
-	    char szFileName[MAX_PATH];
-            HINSTANCE hInstance = GetModuleHandle(NULL);
-
-            GetModuleFileName(hInstance, szFileName, MAX_PATH);
-            MessageBox(hwnd, szFileName, ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+            //GetModuleFileName(hInstance, szFileName, MAX_PATH);
+            MessageBox(hwnd, "Mouse down!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
         }
             break;
+        //case WM_KEYUP:
+        //case WM_SYSKEYDOWN:
+        //case WM_SYSKEYUP:
+        //case WM_CHAR:
+        //    MessageBox(hwnd, "Char pressed!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+        //    break;
+        //case WM_INPUT:
+        //    MessageBox(hwnd, "Input received!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+        //    break;
+        case WM_KEYDOWN:
+        {
+            MessageBox(hwnd, "Key pressed!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+            HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
+            HWND hStatus = GetDlgItem(hwnd, IDC_STATUS_WINDOW);
+            int characterCount = GetWindowTextLength(hEdit);
+            char copiedCharacters[maxPositiveIntChars];
+            //sprintf(copiedCharacters, "%d%", characterCount);
+
+            //char* newCharacterCount = malloc(
+
+            //SendMessage(hStatus, SB_SETTEXT, 1, GetText(hEdit))
+
+            break;
+        }
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
@@ -84,38 +106,64 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case ID_FILE_SAVE:
-                    MessageBox(hwnd, "Save", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                    // Some APIs require unused members to be null
+                    ZeroMemory(&ofn, sizeof(ofn));
+                    // Initialise the OpenFileName struct
+                    ofn.lStructSize = sizeof(ofn);
+                    ofn.hwndOwner = hwnd;
+                    ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+                    ofn.lpstrFile = szFileName;
+                    ofn.nMaxFile = MAX_PATH;
+                    ofn.lpstrDefExt = "txt";
+                    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                    if (*ofn.lpstrFile != '\0')
+                    {
+                        MessageBox(hwnd, "Save", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                    }
+                    else
+                    {
+                        MessageBox(hwnd, "Could not save as file name does not exist", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                    }
                     break;
 
                 case ID_FILE_SAVE_AS:
+                    // Some APIs require unused members to be null
+                    ZeroMemory(&ofn, sizeof(ofn));
+                    // Initialise the OpenFileName struct
                     ofn.lStructSize = sizeof(ofn);
                     ofn.hwndOwner = hwnd;
                     ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
                     ofn.lpstrFile = szFileName;
                     ofn.nMaxFile = MAX_PATH;
-                    ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT; 
                     ofn.lpstrDefExt = "txt";
-
+                    ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT; 
                     if(GetSaveFileName(&ofn))
                     {
                         SaveTextFileFromEdit(GetDlgItem(hwnd, IDC_EDIT_WINDOW), ofn.lpstrFile);
+                        MessageBox(hwnd, "File has been saved", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
                     }
-                    MessageBox(hwnd, "Save As", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
                     break;
-                    
                 case ID_FILE_OPEN:
+                    // Some APIs require unused members to be null
+                    ZeroMemory(&ofn, sizeof(ofn));
+                    // Initialise the OpenFileName struct
                     ofn.lStructSize = sizeof(ofn);
                     ofn.hwndOwner = hwnd;
                     ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
                     ofn.lpstrFile = szFileName;
                     ofn.nMaxFile = MAX_PATH;
-                    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
                     ofn.lpstrDefExt = "txt";
-
+                    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+                    HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
                     if(GetOpenFileName(&ofn))
                     {
                         LoadTextFileToEdit(GetDlgItem(hwnd, IDC_EDIT_WINDOW), ofn.lpstrFile);
                     }
+                    int textLength = GetWindowTextLength(hEdit);
+                    char* textBuffer = (char*)malloc(textLength*(sizeof(char)+1)); // Need to account for null terminator when copying text
+                    GetWindowText(hEdit, textBuffer, textLength);
+                    MessageBox(hwnd, textBuffer, ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
+                    free(textBuffer);
                     break;
 
                 case ID_FILE_UNDO:
