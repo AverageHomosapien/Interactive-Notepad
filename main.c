@@ -3,10 +3,18 @@
 #include "resource.h"
 #include "menu_operations.c"
 
+//BOOL editsMade = false;
 const char* statusBarCharactersSuffix = " Characters";
 const int maxPositiveIntChars = 11;
 char szFileName[MAX_PATH] = "";
 OPENFILENAME ofn;
+
+WNDPROC oldChildWndProc;
+
+// Forward declaration of functions
+LRESULT CALLBACK ParentWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK ChildWndProc(HWND, UINT, WPARAM, LPARAM);
+void WindowResizeTriggered(HWND hwnd);
 
 // The Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -18,18 +26,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // Initialize common controls (required for using the status bar)
             InitCommonControls();
 
-            HFONT hfDefault;
-            HWND hEdit;
-            HWND hStatus;
-            hfDefault = GetStockObject(DEFAULT_GUI_FONT);
-
-            // Creating the text edit area on the notepad
-            hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, 0, 0, 100, 100, hwnd, (HMENU)IDC_EDIT_WINDOW, GetModuleHandle(NULL), NULL);
-            if(hEdit == NULL)
-            {
-                MessageBox(hwnd, "Could not create edit box.", "Error", MB_OK | MB_ICONERROR);
-            }
-            SendMessage(hEdit, WM_SETFONT, (WPARAM)hfDefault, MAKELPARAM(FALSE, 0));
+            HWND hStatus; // Status bar extension window
+            HFONT hfDefault = GetStockObject(DEFAULT_GUI_FONT);
 
             // Creating the 'StatusBox' footer on the notepad
             hStatus = CreateWindowEx(0, STATUSCLASSNAME, NULL, WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP, 0, 0, 0, 0, hwnd, (HMENU)IDC_STATUS_WINDOW, GetModuleHandle(NULL), NULL);
@@ -43,53 +41,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             SendMessage(hStatus, SB_SETPARTS, sizeof(statwidths)/sizeof(int), (LPARAM)statwidths);
             SendMessage(hStatus, SB_SETTEXT, 0, (LPARAM)"Line 1, Column 1");
             SendMessage(hStatus, SB_SETTEXT, 1, (LPARAM)"0 Characters");
-            
+
+            WindowResizeTriggered(hwnd);
         }
         case WM_SIZE:
         {
-            HWND hStatus;
-            RECT rcStatus;
-            int iStatusHeight;
-
-            HWND hEdit;
-            int iEditHeight;
-            RECT rcClient;
-
-            // Size status bar and get height
-            hStatus = GetDlgItem(hwnd, IDC_STATUS_WINDOW);
-            SendMessage(hStatus, WM_SIZE, 0, 0);
-            GetWindowRect(hStatus, &rcStatus);
-            iStatusHeight = rcStatus.bottom - rcStatus.top;
-
-            // Calculate remaining height and size edit
-            GetClientRect(hwnd, &rcClient);
-            iEditHeight = rcClient.bottom - iStatusHeight;
-            hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
-            SetWindowPos(hEdit, NULL, 0, 0, rcClient.right, iEditHeight, SWP_NOZORDER); 
+            WindowResizeTriggered(hwnd);
         }
         break;
-        case WM_LBUTTONDOWN:
-        {
-            //GetModuleFileName(hInstance, szFileName, MAX_PATH);
-            MessageBox(hwnd, "Mouse down!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
-        }
-            break;
-        //case WM_KEYUP:
-        //case WM_SYSKEYDOWN:
-        //case WM_SYSKEYUP:
-        //case WM_CHAR:
-        //    MessageBox(hwnd, "Char pressed!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
-        //    break;
-        //case WM_INPUT:
-        //    MessageBox(hwnd, "Input received!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
-        //    break;
+        case WM_KEYUP:
         case WM_KEYDOWN:
-        {
-            MessageBox(hwnd, "Key pressed!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
-            HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
-            HWND hStatus = GetDlgItem(hwnd, IDC_STATUS_WINDOW);
-            int characterCount = GetWindowTextLength(hEdit);
-            char copiedCharacters[maxPositiveIntChars];
+        { 
+            MessageBox(hwnd, "Parent Received callback!!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
+            //MessageBox(hwnd, "Key pressed!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+            //HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
+            //HWND hStatus = GetDlgItem(hwnd, IDC_STATUS_WINDOW);
+            //int characterCount = GetWindowTextLength(hEdit);
+            //char copiedCharacters[maxPositiveIntChars];
             //sprintf(copiedCharacters, "%d%", characterCount);
 
             //char* newCharacterCount = malloc(
@@ -104,7 +72,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 case ID_FILE_EXIT:
                     DestroyWindow(hwnd);
                     break;
-
                 case ID_FILE_SAVE:
                     // Some APIs require unused members to be null
                     ZeroMemory(&ofn, sizeof(ofn));
@@ -154,16 +121,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     ofn.nMaxFile = MAX_PATH;
                     ofn.lpstrDefExt = "txt";
                     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-                    HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
+                    //HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
                     if(GetOpenFileName(&ofn))
                     {
                         LoadTextFileToEdit(GetDlgItem(hwnd, IDC_EDIT_WINDOW), ofn.lpstrFile);
                     }
-                    int textLength = GetWindowTextLength(hEdit);
-                    char* textBuffer = (char*)malloc(textLength*(sizeof(char)+1)); // Need to account for null terminator when copying text
-                    GetWindowText(hEdit, textBuffer, textLength);
-                    MessageBox(hwnd, textBuffer, ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
-                    free(textBuffer);
+                    //int textLength = GetWindowTextLength(hEdit);
+                    //char* textBuffer = (char*)malloc(textLength*(sizeof(char)+1)); // Need to account for null terminator when copying text
+                    //GetWindowText(hEdit, textBuffer, textLength);
+                    //MessageBox(hwnd, textBuffer, ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
+                    //free(textBuffer);
                     break;
 
                 case ID_FILE_UNDO:
@@ -191,8 +158,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR lpCmdLine, int nCmdShow)
 {
     WNDCLASSEX wc;
-    HWND hwnd;
+    HWND hwnd, hEdit;
     MSG Msg;
+    HFONT hfDefault = GetStockObject(DEFAULT_GUI_FONT);
 
     // Register the Window Class
     wc.cbSize        = sizeof(WNDCLASSEX);
@@ -234,6 +202,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
 
+    // Register child window class
+    wc.lpfnWndProc = DefWindowProc;
+    wc.lpszClassName = "ChildWindowClass";
+    RegisterClass(&wc);
+
+    // Create child window
+    hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, 0, 0, 100, 100, hwnd, (HMENU)IDC_EDIT_WINDOW, GetModuleHandle(NULL), NULL);
+    if(hEdit == NULL)
+    {
+        MessageBox(hwnd, "Could not create edit box.", "Error", MB_OK | MB_ICONERROR);
+    }
+    SendMessage(hEdit, WM_SETFONT, (WPARAM)hfDefault, MAKELPARAM(FALSE, 0));
+
+    // Subclass the child window
+    oldChildWndProc = (WNDPROC)SetWindowLongPtr(hEdit, GWLP_WNDPROC, (LONG_PTR)ChildWndProc);
+
     // Engage The Message Loop
     while(GetMessage(&Msg, NULL, 0, 0) > 0)
     {
@@ -241,4 +225,43 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         DispatchMessage(&Msg);
     }
     return Msg.wParam;
+}
+
+// Child window procedure
+LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    // Redirect input messages to the parent window
+    HWND hwndParent = GetParent(hwnd);
+
+    switch (msg) {
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+        MessageBox(hwnd, "Callback!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
+        SendMessage(hwndParent, msg, wParam, lParam);
+        return 0;
+    }
+
+    // Call the original window procedure for default handling
+    return CallWindowProc(oldChildWndProc, hwnd, msg, wParam, lParam);
+}
+
+void WindowResizeTriggered(HWND hwnd){
+    HWND hStatus;
+    RECT rcStatus;
+    int iStatusHeight;
+
+    HWND hEdit;
+    int iEditHeight;
+    RECT rcClient;
+
+    // Size status bar and get height
+    hStatus = GetDlgItem(hwnd, IDC_STATUS_WINDOW);
+    SendMessage(hStatus, WM_SIZE, 0, 0);
+    GetWindowRect(hStatus, &rcStatus);
+    iStatusHeight = rcStatus.bottom - rcStatus.top;
+
+    // Calculate remaining height and size edit
+    GetClientRect(hwnd, &rcClient);
+    iEditHeight = rcClient.bottom - iStatusHeight;
+    hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
+    SetWindowPos(hEdit, NULL, 0, 0, rcClient.right, iEditHeight, SWP_NOZORDER); 
 }
