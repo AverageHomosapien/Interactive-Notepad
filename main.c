@@ -1,9 +1,10 @@
 #include <windows.h>
 #include <commctrl.h>
+#include <stdbool.h>
 #include "resource.h"
 #include "menu_operations.c"
 
-//BOOL editsMade = false;
+BOOL outstandingChanges = false;
 const char* statusBarCharactersSuffix = " Characters";
 const int maxPositiveIntChars = 11;
 char szFileName[MAX_PATH] = "";
@@ -44,14 +45,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             WindowResizeTriggered(hwnd);
         }
+
         case WM_SIZE:
         {
             WindowResizeTriggered(hwnd);
         }
         break;
+
         case WM_KEYUP:
         case WM_KEYDOWN:
         { 
+            outstandingChanges = true;
             MessageBox(hwnd, "Parent Received callback!!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
             //MessageBox(hwnd, "Key pressed!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
             //HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
@@ -63,15 +67,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             //char* newCharacterCount = malloc(
 
             //SendMessage(hStatus, SB_SETTEXT, 1, GetText(hEdit))
-
             break;
         }
+
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
+
                 case ID_FILE_EXIT:
                     DestroyWindow(hwnd);
                     break;
+
                 case ID_FILE_SAVE:
                     // Some APIs require unused members to be null
                     ZeroMemory(&ofn, sizeof(ofn));
@@ -86,6 +92,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     if (*ofn.lpstrFile != '\0')
                     {
                         MessageBox(hwnd, "Save", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                        outstandingChanges = false;
                     }
                     else
                     {
@@ -108,8 +115,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     {
                         SaveTextFileFromEdit(GetDlgItem(hwnd, IDC_EDIT_WINDOW), ofn.lpstrFile);
                         MessageBox(hwnd, "File has been saved", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                        outstandingChanges = false;
                     }
                     break;
+
                 case ID_FILE_OPEN:
                     // Some APIs require unused members to be null
                     ZeroMemory(&ofn, sizeof(ofn));
@@ -142,12 +151,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     break;
             }
             break;
+
         case WM_CLOSE:
-            DestroyWindow(hwnd);
+            if (outstandingChanges && MessageBox(hwnd, "There are outstanding changes. Are you sure you want to quit?", ID_APP_NAME, MB_YESNO | MB_ICONINFORMATION | MB_DEFBUTTON2) == IDYES){
+                DestroyWindow(hwnd);
+            }
+            else if (!outstandingChanges){
+                DestroyWindow(hwnd);
+            }
             break;
+
         case WM_DESTROY:
             PostQuitMessage(0);
             break;
+
         default:
             return DefWindowProc(hwnd, msg, wParam, lParam);
     }
