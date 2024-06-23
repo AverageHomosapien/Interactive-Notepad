@@ -41,7 +41,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             SendMessage(hStatus, WM_SETFONT, (WPARAM)hfDefault, MAKELPARAM(FALSE, 0));
             // Adding messages to a dialog box
-            int statwidths[] = {100, -1};
+            int statwidths[] = {150, -1};
             SendMessage(hStatus, SB_SETPARTS, sizeof(statwidths)/sizeof(int), (LPARAM)statwidths);
             SendMessage(hStatus, SB_SETTEXT, 0, (LPARAM)"Line 1, Column 1");
             SendMessage(hStatus, SB_SETTEXT, 1, (LPARAM)"0 Characters");
@@ -58,27 +58,44 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_KEYUP:
         case WM_KEYDOWN:
         {
-            outstandingChanges = true;
-            
             HWND hStatus = GetDlgItem(hwnd, IDC_STATUS_WINDOW);
             HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
 
+            outstandingChanges = true;
+
+            // Set the character location in the window
+            DWORD startPos, endPos;
+            SendMessage(hEdit, EM_GETSEL, (WPARAM)&startPos, (LPARAM)&endPos);
+            int lineNumber = SendMessage(hEdit, EM_LINEFROMCHAR, (WPARAM)startPos, 0) + 1;
+            
+            char* charLocOutput = (char *)malloc(40 * sizeof(char));
+            // Account for carriage return characters for each newline
+            sprintf(charLocOutput, "Line %d, Column %lu", lineNumber, startPos+2 - 2 * (lineNumber));
+            SendMessage(hStatus, SB_SETTEXT, 0, (LPARAM)charLocOutput);
+            free(charLocOutput);
+
+            // Set the number of characters in the window
             int characterCount = GetWindowTextLength(hEdit);
             int nDigits = floor(log10(abs(Max(characterCount, 1)))) + 1;
             char* outputString = (char *)malloc((11 + nDigits) * sizeof(char));
 
-            sprintf(outputString, "%d Characters", characterCount);
+            sprintf(outputString, "%d Characters", characterCount + 2 - 2 * (lineNumber));
             SendMessage(hStatus, SB_SETTEXT, 1, (LPARAM)outputString);
             free(outputString);
+
             break;
         }
 
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
-
                 case ID_FILE_EXIT:
                     DestroyWindow(hwnd);
+                    break;
+
+                case ID_SELECT_ALL:
+                    HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
+                    SendMessage(hEdit, EM_SETSEL, 0, -1);
                     break;
 
                 case ID_FILE_SAVE:
@@ -138,16 +155,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     ofn.nMaxFile = MAX_PATH;
                     ofn.lpstrDefExt = "txt";
                     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-                    //HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
                     if(GetOpenFileName(&ofn))
                     {
                         LoadTextFileToEdit(GetDlgItem(hwnd, IDC_EDIT_WINDOW), ofn.lpstrFile);
                     }
-                    //int textLength = GetWindowTextLength(hEdit);
-                    //char* textBuffer = (char*)malloc(textLength*(sizeof(char)+1)); // Need to account for null terminator when copying text
-                    //GetWindowText(hEdit, textBuffer, textLength);
-                    //MessageBox(hwnd, textBuffer, ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
-                    //free(textBuffer);
                     break;
 
                 case ID_FILE_UNDO:

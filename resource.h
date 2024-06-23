@@ -11,6 +11,7 @@
 #define ID_FILE_OPEN 9004
 #define ID_FILE_UNDO 9005
 #define ID_FILE_REDO 9006
+#define ID_SELECT_ALL 9007
 
 #define ID_APP_NAME "Interactive Notepad"
 #define ID_APP_CLASS "MainWindowClass"
