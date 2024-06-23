@@ -1,11 +1,13 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h> // For itoa in some environments
 #include <windows.h>
 #include <commctrl.h>
 #include <stdbool.h>
+#include <math.h>
 #include "resource.h"
 #include "menu_operations.c"
 
-// Prefix of max# positive characters, to prevent needing to reallocate memory for every time character # is recalculated
-char characterCountStatus[22] = "          0 Characters";
 BOOL outstandingChanges = false;
 char szFileName[MAX_PATH] = "";
 OPENFILENAME ofn;
@@ -15,7 +17,8 @@ WNDPROC oldChildWndProc;
 // Forward declaration of functions
 LRESULT CALLBACK ParentWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK ChildWndProc(HWND, UINT, WPARAM, LPARAM);
-void WindowResizeTriggered(HWND hwnd);
+void WindowResizeTriggered(HWND);
+int Max(int, int);
 
 // The Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -54,19 +57,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_KEYUP:
         case WM_KEYDOWN:
-        { 
+        {
             outstandingChanges = true;
-            //MessageBox(hwnd, "Parent Received callback!!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
-            //MessageBox(hwnd, "Key pressed!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
-            //HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
-            //HWND hStatus = GetDlgItem(hwnd, IDC_STATUS_WINDOW);
-            //int characterCount = GetWindowTextLength(hEdit);
-            //char copiedCharacters[maxPositiveIntChars];
-            //sprintf(copiedCharacters, "%d%", characterCount);
+            
+            HWND hStatus = GetDlgItem(hwnd, IDC_STATUS_WINDOW);
+            HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
 
-            //char* newCharacterCount = malloc(
+            int characterCount = GetWindowTextLength(hEdit);
+            int nDigits = floor(log10(abs(Max(characterCount, 1)))) + 1;
+            char* outputString = (char *)malloc((11 + nDigits) * sizeof(char));
 
-            //SendMessage(hStatus, SB_SETTEXT, 1, GetText(hEdit))
+            sprintf(outputString, "%d Characters", characterCount);
+            SendMessage(hStatus, SB_SETTEXT, 1, (LPARAM)outputString);
+            free(outputString);
             break;
         }
 
@@ -291,4 +294,11 @@ void WindowResizeTriggered(HWND hwnd){
     iEditHeight = rcClient.bottom - iStatusHeight;
     hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
     SetWindowPos(hEdit, NULL, 0, 0, rcClient.right, iEditHeight, SWP_NOZORDER); 
+}
+
+int Max(int num1, int num2){
+    if (num1 > num2){
+        return num1;
+    }
+    return num2;
 }
