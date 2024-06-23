@@ -4,9 +4,9 @@
 #include "resource.h"
 #include "menu_operations.c"
 
+// Prefix of max# positive characters, to prevent needing to reallocate memory for every time character # is recalculated
+char characterCountStatus[22] = "          0 Characters";
 BOOL outstandingChanges = false;
-const char* statusBarCharactersSuffix = " Characters";
-const int maxPositiveIntChars = 11;
 char szFileName[MAX_PATH] = "";
 OPENFILENAME ofn;
 
@@ -56,7 +56,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_KEYDOWN:
         { 
             outstandingChanges = true;
-            MessageBox(hwnd, "Parent Received callback!!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
+            //MessageBox(hwnd, "Parent Received callback!!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
             //MessageBox(hwnd, "Key pressed!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
             //HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
             //HWND hStatus = GetDlgItem(hwnd, IDC_STATUS_WINDOW);
@@ -96,7 +96,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
                     else
                     {
-                        MessageBox(hwnd, "Could not save as file name does not exist", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                        if(GetSaveFileName(&ofn))
+                        {
+                            SaveTextFileFromEdit(GetDlgItem(hwnd, IDC_EDIT_WINDOW), ofn.lpstrFile);
+                            MessageBox(hwnd, "File has been saved", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);   
+                            outstandingChanges = false;
+                        }
                     }
                     break;
 
@@ -178,6 +183,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     HWND hwnd, hEdit;
     MSG Msg;
     HFONT hfDefault = GetStockObject(DEFAULT_GUI_FONT);
+    HACCEL hAccel;
 
     // Register the Window Class
     wc.cbSize        = sizeof(WNDCLASSEX);
@@ -192,6 +198,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wc.lpszMenuName  = MAKEINTRESOURCE(IDR_NOTEPADMENU);
     wc.lpszClassName = ID_APP_CLASS;
+
+    hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR));
 
     if(!RegisterClassEx(&wc))
     {
@@ -238,8 +246,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     // Engage The Message Loop
     while(GetMessage(&Msg, NULL, 0, 0) > 0)
     {
-        TranslateMessage(&Msg);
-        DispatchMessage(&Msg);
+        if(!TranslateAccelerator(hwnd, hAccel, &Msg)){
+            TranslateMessage(&Msg);
+            DispatchMessage(&Msg);
+        }
     }
     return Msg.wParam;
 }
@@ -252,7 +262,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg) {
     case WM_KEYDOWN:
     case WM_KEYUP:
-        MessageBox(hwnd, "Callback!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
+        //MessageBox(hwnd, "Callback!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
         SendMessage(hwndParent, msg, wParam, lParam);
         return 0;
     }

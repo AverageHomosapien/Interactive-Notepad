@@ -4,17 +4,27 @@ IDR_NOTEPADMENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&Open", ID_FILE_OPEN
-        MENUITEM "&Save", ID_FILE_SAVE
-        MENUITEM "&S&ave As", ID_FILE_SAVE_AS
-        MENUITEM "E&xit", ID_FILE_EXIT
+        MENUITEM "&Open\tCtrl+O", ID_FILE_OPEN
+        MENUITEM "&Save\tCtrl+S", ID_FILE_SAVE
+        MENUITEM "&S&ave As\tCtrl+Shift+S", ID_FILE_SAVE_AS
+        MENUITEM "E&xit\tCtrl+Q", ID_FILE_EXIT
     END
 
     POPUP "&Actions"
     BEGIN
-        MENUITEM "&Undo", ID_FILE_UNDO
-        MENUITEM "&Redo", ID_FILE_REDO
+        MENUITEM "Undo\tCtrl+U", ID_FILE_UNDO
+        MENUITEM "&Redo\tCtrl+R", ID_FILE_REDO
     END
 END
 
 IDI_NOTEPADICON ICON "notepad.ico"
+
+IDR_ACCELERATOR ACCELERATORS
+BEGIN
+    "^Q", ID_FILE_EXIT, VIRTKEY
+    "^S", ID_FILE_SAVE, VIRTKEY
+    "^S", ID_FILE_SAVE_AS, VIRTKEY, CONTROL, SHIFT
+    "^O", ID_FILE_OPEN, VIRTKEY
+    "^U", ID_FILE_UNDO, VIRTKEY
+    "^R", ID_FILE_REDO, VIRTKEY
+END
