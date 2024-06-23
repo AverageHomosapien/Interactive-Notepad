@@ -172,7 +172,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_CLOSE:
-            if (outstandingChanges && MessageBox(hwnd, "There are outstanding changes. Are you sure you want to quit?", ID_APP_NAME, MB_YESNO | MB_ICONINFORMATION | MB_DEFBUTTON2) == IDYES){
+            HWND hEdit = GetDlgItem(hwnd, IDC_EDIT_WINDOW);
+            int characterCount = GetWindowTextLength(hEdit);
+
+            if (characterCount == 0){
+                DestroyWindow(hwnd);
+            }
+            else if (outstandingChanges && MessageBox(hwnd, "There are outstanding changes. Are you sure you want to quit?", ID_APP_NAME, MB_YESNO | MB_ICONINFORMATION | MB_DEFBUTTON2) == IDYES){
                 DestroyWindow(hwnd);
             }
             else if (!outstandingChanges){
@@ -276,7 +282,6 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg) {
     case WM_KEYDOWN:
     case WM_KEYUP:
-        //MessageBox(hwnd, "Callback!", ID_APP_NAME, MB_OK | MB_ICONINFORMATION);
         SendMessage(hwndParent, msg, wParam, lParam);
         return 0;
     }
